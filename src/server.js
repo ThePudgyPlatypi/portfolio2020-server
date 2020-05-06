@@ -34,10 +34,14 @@ app.get('/api/pieces/:name', async (req, res) => {
 
 // GET all pieces
 app.get('/api/pieces', async (req, res) => {
-    withDB( async (db) => {
-        const featuredPieces = await db.collection('pieces').find({}).toArray();
-        res.status(200).json(featuredPieces);
-    }, res);
+    try {
+        withDB( async (db) => {
+            const featuredPieces = await db.collection('pieces').find({}).toArray();
+            res.status(200).json(featuredPieces);
+        }, res);
+    } catch(e) {
+        res.status(500).json({ message: 'Something has gone tragically wrong :(', e });
+    }
 });
 
 // GET all piece keys for table headers
