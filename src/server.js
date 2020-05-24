@@ -1,15 +1,28 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { MongoClient, ObjectId } from "mongodb";
+import cors from "cors";
+import multer from "multer";
 
 const app = express();
+const mongoURI = "mongodb://localhost:27017";
 
 app.use(bodyParser.json());
+app.use(cors());
+app.use(express.static("public"));
+
+var storage = multer.diskStorage({
+  destination: "public/images",
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s/g, "-"));
+  },
+});
+const uploadFile = multer({ storage: storage }).array("file");
 
 const withDB = async (operations, res) => {
   try {
     // fire up mongodb client async
-    const client = await MongoClient.connect("mongodb://localhost:27017", {
+    const client = await MongoClient.connect(mongoURI, {
       useNewUrlParser: true,
     });
     // navigate to the correct db in mongo
@@ -24,6 +37,7 @@ const withDB = async (operations, res) => {
   }
 };
 
+// ------------------------- GET ----------------------------------
 // GET - Pieces:piece
 app.get("/api/piece/:name", async (req, res) => {
   withDB(async (db) => {
@@ -98,6 +112,18 @@ app.get("/api/featured-pieces", async (req, res) => {
   }, res);
 });
 
+// GET - all images
+app.get("/api/photos", async (req, res) => {
+  withDB(async (db) => {
+    const photos = await db.collection("photos.files").find().toArray();
+    res.status(200).json(photos);
+  }, res);
+});
+
+// GET - One Image
+app.get("/api/photos/");
+
+// ------------------------- POST ----------------------------------
 // POST - Pieces:shortDescription
 app.post("/api/pieces/:name/featured", async (req, res) => {
   withDB(async (db) => {
@@ -139,7 +165,7 @@ app.post("/api/pieces/add-piece", async (req, res) => {
   }, res);
 });
 
-// update the whole object, expects the whole object
+//POST - update the whole object, expects the whole object
 app.post("/api/pieces/:title/update-piece", async (req, res) => {
   withDB(async (db) => {
     const pieceName = req.params.name;
@@ -168,7 +194,7 @@ app.post("/api/pieces/:title/update-piece", async (req, res) => {
   }, res);
 });
 
-// update just one value
+//POST - update just one value
 app.post("/api/pieces/:id/:key/update-piece", async (req, res) => {
   withDB(async (db) => {
     let dynamicSet = {};
@@ -188,6 +214,20 @@ app.post("/api/pieces/:id/:key/update-piece", async (req, res) => {
   }, res);
 });
 
+//POST - upload a picture
+app.post("/api/upload", async (req, res) => {
+  await uploadFile(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      res.status(500).json(err);
+    } else if (err) {
+      res.status(500).json(err);
+    }
+
+    res.json({ file: req.files });
+  });
+});
+
+// ------------------------- DELETE ----------------------------------
 // DELETE - delete one piece
 app.delete("/api/pieces/delete-piece", async (req, res) => {
   const { name } = req.body;
