@@ -29,7 +29,7 @@ const withDB = async (operations, res) => {
     const db = client.db("portfolio");
     //specific request logic
     await operations(db);
-    client.close;
+    client.close();
   } catch (e) {
     res
       .status(500)
@@ -201,15 +201,15 @@ app.post("/api/pieces/:id/:key/update-piece", async (req, res) => {
     const id = req.params.id;
     const o_id = new ObjectId(id);
     dynamicSet[req.params.key] = req.body.value;
-    await db.collection("pieces").updateOne(
+    const updatedPieceInfo = await db.collection("pieces").updateOne(
       { _id: o_id },
       {
         $set: dynamicSet,
       }
     );
-    const updatedPieceInfo = await db
-      .collection("pieces")
-      .findOne({ _id: o_id });
+    // const updatedPieceInfo = await db
+    //   .collection("pieces")
+    //   .findOne({ _id: o_id });
     res.status(200).json(updatedPieceInfo);
   }, res);
 });
