@@ -67,8 +67,22 @@ app.get("/api/piece/:id", async (req, res) => {
 app.get("/api/pieces", async (req, res) => {
   try {
     withDB(async (db) => {
-      const featuredPieces = await db.collection("pieces").find({}).toArray();
-      res.status(200).json(featuredPieces);
+      const pieces = await db.collection("pieces").find({}).toArray();
+      res.status(200).json(pieces);
+    }, res);
+  } catch (e) {
+    res
+      .status(500)
+      .json({ message: "Something has gone tragically wrong :(", e });
+  }
+});
+
+// GET all information
+app.get("/api/info", async (req, res) => {
+  try {
+    withDB(async (db) => {
+      const info = await db.collection("info").find({}).toArray();
+      res.status(200).json(info);
     }, res);
   } catch (e) {
     res
@@ -211,6 +225,23 @@ app.post("/api/pieces/:id/:key/update-piece", async (req, res) => {
     //   .collection("pieces")
     //   .findOne({ _id: o_id });
     res.status(200).json(updatedPieceInfo);
+  }, res);
+});
+
+//POST - update just one value in info
+app.post("/api/info/:id/:key/update-piece", async (req, res) => {
+  withDB(async (db) => {
+    let dynamicSet = {};
+    const id = req.params.id;
+    const o_id = new ObjectId(id);
+    dynamicSet[req.params.key] = req.body.value;
+    const updatedSiteInfo = await db.collection("info").updateOne(
+      { _id: o_id },
+      {
+        $set: dynamicSet,
+      }
+    );
+    res.status(200).json(updatedSiteInfo);
   }, res);
 });
 
