@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
 import multer from "multer";
+import {fs} from 'fs';
 
 const app = express();
 const mongoURI = "mongodb://localhost:27017";
