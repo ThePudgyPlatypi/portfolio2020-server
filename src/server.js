@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
 import multer from "multer";
-import {fs} from 'fs';
+import * as fs from 'fs';
 
 const app = express();
 const mongoURI = "mongodb://localhost:27017";
@@ -40,7 +40,7 @@ const withDB = async (operations, res) => {
 
 // ------------------------- GET ----------------------------------
 // GET - Pieces:piece
-app.get("/api/piece/:name", async (req, res) => {
+app.get("/api/piece/:name/name", async (req, res) => {
   withDB(async (db) => {
     // grab url param :name and store it
     const pieceName = req.params.name;
@@ -92,6 +92,32 @@ app.get("/api/info", async (req, res) => {
   }
 });
 
+// GET all of a certain category
+app.get("/api/pieces/category/:category", async (req, res) => {
+  try {
+    let category = req.params.category;
+  
+    function titleCase(camelCase) {
+      return camelCase
+        .replace(/([A-Z])/g, (match) => ` ${match}`)
+        .replace(/^./, (match) => match.toUpperCase())
+        .trim();
+    }
+  
+    const categoryCorrect = titleCase(category);
+
+    withDB(async (db) => {
+      const pieces = await db.collection("pieces").find({category: categoryCorrect}).toArray();
+      res.status(200).json(pieces);
+    }, res);
+  } catch (e) {
+    res
+      .status(500)
+      .json({ message: "Something has gone tragically wrong :(", e });
+  }
+});
+
+
 // GET all piece keys for table headers
 // NOTES: couldn't use arrow functions because it locked this
 // emit() does something with firing listeners. Don't fully understand
@@ -134,9 +160,6 @@ app.get("/api/photos", async (req, res) => {
     res.status(200).json(photos);
   }, res);
 });
-
-// GET - One Image
-app.get("/api/photos/");
 
 // ------------------------- POST ----------------------------------
 // POST - Pieces:shortDescription
@@ -260,6 +283,18 @@ app.post("/api/upload", async (req, res) => {
 });
 
 // ------------------------- DELETE ----------------------------------
+// DELETE - delete one iamge from server
+app.delete("/api/images/:image/delete-image", async (req, res) => {
+  const path = req.params.image;
+  fs.unlink(`./public/images/${path}`, (err) => {
+    if (err) {
+      res.status(500).json(err);
+    } else {
+      res.status(200).json({ result: true});
+    };
+  })
+});
+
 // DELETE - delete one piece
 app.delete("/api/pieces/delete-piece", async (req, res) => {
   const { name } = req.body;
