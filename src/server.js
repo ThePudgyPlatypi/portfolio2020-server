@@ -4,16 +4,17 @@ import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
 import multer from "multer";
 import * as fs from 'fs';
+import path from 'path';
 
 const app = express();
 const mongoURI = "mongodb://localhost:27017";
 
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "build")));
 
 var storage = multer.diskStorage({
-  destination: "public/images",
+  destination: "src/build/images",
   filename: function (req, file, cb) {
     cb(null, Date.now() + "-" + file.originalname.replace(/\s/g, "-"));
   },
@@ -160,6 +161,10 @@ app.get("/api/photos", async (req, res) => {
     res.status(200).json(photos);
   }, res);
 });
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname + '/build/index.html'));
+})
 
 // ------------------------- POST ----------------------------------
 // POST - Pieces:shortDescription
